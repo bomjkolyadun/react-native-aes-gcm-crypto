@@ -10,12 +10,10 @@ Pod::Spec.new do |s|
   s.license      = package["license"]
   s.authors      = package["author"]
 
-  s.platforms    = { :ios => "13.0" }
   s.source       = { :git => "https://github.com/craftzdog/react-native-aes-gcm-crypto.git", :tag => "#{s.version}" }
+  s.ios.deployment_target = '13.0'
+  s.osx.deployment_target = '10.15'
 
-  
   s.source_files = "ios/**/*.{h,m,mm,swift}"
-  
-
   s.dependency "React-Core"
 end
