@@ -18,6 +18,7 @@
                   withRejecter:(RCTPromiseRejectBlock)reject)
      RCT_EXTERN_METHOD(encrypt:(NSString *)plainData
                       inBase64:(BOOL)inBase64
+                         nonce:(NSString*)nonce
                        withKey:(NSString *)key
                   withResolver:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
