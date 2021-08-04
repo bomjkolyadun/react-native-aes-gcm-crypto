@@ -28,8 +28,14 @@ class AesGcmCrypto: NSObject {
         return decryptedData
     }
 
-    func encryptData(plainData: Data, key: Data, nonce: Data?) throws -> AES.GCM.SealedBox {
+    func encryptData(plainData: Data, key: Data, nonceData: Data?) throws -> AES.GCM.SealedBox {
         let skey = SymmetricKey(data: key)
+        let nonce: AES.GCM.Nonce?
+        if let data = nonceData {
+            nonce = try? AES.GCM.Nonce(data: data)
+        } else {
+            nonce = nil
+        }
         return try AES.GCM.seal(plainData, using: skey, nonce: nonce)
     }
 
@@ -79,19 +85,24 @@ class AesGcmCrypto: NSObject {
         }
     }
 
-    @objc(encrypt:inBase64:nonce:withKey:withResolver:withRejecter:)
-    func encrypt(plainText: String, inBase64: Bool, nonce: String, key: String, resolve:RCTPromiseResolveBlock, reject:RCTPromiseRejectBlock) -> Void {
+    @objc(encrypt:inBase64:withNonce:withKey:withResolver:withRejecter:)
+    func encrypt(plainText: String,
+                 inBase64: Bool,
+                 nonce: String,
+                 key: String,
+                 resolve:RCTPromiseResolveBlock,
+                 reject:RCTPromiseRejectBlock) -> Void {
         do {
             let keyData = Data(base64Encoded: key)!
-            let plainData = inBase64 ? Data(base64Encoded: plainText)! : plainText.data(using: .utf8)!
-            let sealedBox = try self.encryptData(plainData: plainData, key: keyData)
-
             let iv = Data(base64Encoded: nonce)!
+            let plainData = inBase64 ? Data(base64Encoded: plainText)! : plainText.data(using: .utf8)!
+            let sealedBox = try self.encryptData(plainData: plainData, key: keyData, nonceData: iv)
+
             let tag = sealedBox.tag.hexadecimal
             let payload = sealedBox.ciphertext.base64EncodedString()
 
             let response: [String: String] = [
-                "iv": iv,
+                "iv": nonce,
                 "tag": tag,
                 "content": payload
             ]
@@ -113,7 +124,7 @@ class AesGcmCrypto: NSObject {
             }
             let plainData = file!.readDataToEndOfFile()
 
-            let sealedBox = try self.encryptData(plainData: plainData, key: keyData)
+            let sealedBox = try self.encryptData(plainData: plainData, key: keyData, nonceData: nil)
 
             let iv = sealedBox.nonce.withUnsafeBytes {
                 Data(Array($0)).hexadecimal
